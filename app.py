@@ -10,9 +10,13 @@ DATABASE_URL = "postgresql://supermarket_sales_db_user:Vrsr0jKVl0fMaHi38z0ogBOIX
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
 
+@app.route('/')
+def home():
+    return jsonify({"message": "Welcome to the Supermarket Sales API!"})
+
 @app.route('/sales', methods=['GET'])
 def get_sales():
-    """Fetch 10 rows from the supermarket_sales table and convert time fields to strings."""
+    """Fetch 10 rows from the supermarket_sales table and convert TIME fields to strings."""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -22,17 +26,19 @@ def get_sales():
         rows = cursor.fetchall()
         column_names = [desc[0] for desc in cursor.description]
 
-        # Convert results into a list of dictionaries
+        # Convert rows into a list of dictionaries
         results = []
         for row in rows:
             row_dict = dict(zip(column_names, row))
-            
-            # Convert TIME and DATE objects to strings
-            if "Time" in row_dict and isinstance(row_dict["Time"], (str, bytes)) is False:
-                row_dict["Time"] = row_dict["Time"].strftime("%H:%M:%S")
 
-            if "Date" in row_dict and isinstance(row_dict["Date"], (str, bytes)) is False:
-                row_dict["Date"] = row_dict["Date"].strftime("%Y-%m-%d")
+            # Convert TIME and DATE fields to string format
+            for key, value in row_dict.items():
+                if isinstance(value, (bytes, memoryview)):  # Handle binary data
+                    row_dict[key] = value.decode("utf-8")
+                elif isinstance(value, (str, int, float)):  # Keep normal values
+                    continue
+                else:  # Convert Date and Time fields
+                    row_dict[key] = str(value)
 
             results.append(row_dict)
 
