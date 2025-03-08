@@ -9,7 +9,10 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://supermarket_sales_db_user
 def get_db_connection():
     return psycopg2.connect(DATABASE_URL)
 
-@app.route('/sales', methods=['GET'])
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"message": "Welcome to the Supermarket Sales API!"})
+
 def get_sales():
     conn = get_db_connection()
     cursor = conn.cursor()
